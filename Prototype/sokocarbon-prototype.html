@@ -1,1 +1,1118 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SokoCarbon — Interactive Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1a7a4a;
+    --green-light: #2db36f;
+    --green-pale: #eaf3de;
+    --ink: #0f1a12;
+    --white: #fefdf9;
+    --smoke: #f5f2eb;
+    --muted: #6b7c70;
+    --border: #d8ddd9;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--smoke);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--ink);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .topbar-logo::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green-light);
+  }
+
+  .topbar-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .topbar-tag {
+    background: rgba(45,179,111,0.15);
+    border: 1px solid rgba(45,179,111,0.3);
+    color: var(--green-light);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+  }
+
+  /* ── FLOW NAV ── */
+  .flow-nav {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .fnav-item {
+    flex: 1;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .fnav-item:last-child { border-right: none; }
+
+  .fnav-item:hover { background: var(--smoke); }
+
+  .fnav-item.active {
+    background: var(--green);
+  }
+
+  .fnav-item.done {
+    background: #f0faf4;
+  }
+
+  .fnav-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    margin: 0 auto 5px;
+    color: var(--muted);
+    background: #fff;
+    transition: all 0.15s;
+  }
+
+  .fnav-item.active .fnav-num {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+  }
+
+  .fnav-item.done .fnav-num {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+    font-size: 13px;
+  }
+
+  .fnav-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .fnav-item.active .fnav-label { color: rgba(255,255,255,0.9); }
+  .fnav-item.done .fnav-label { color: var(--green); }
+
+  .fnav-sub {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 2px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .fnav-item.active .fnav-sub { color: rgba(255,255,255,0.5); }
+  .fnav-item.done .fnav-sub { color: #7ec89a; }
+
+  /* ── CONTENT AREA ── */
+  .content-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  .screen-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .screen-meta {}
+  .screen-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+
+  .screen-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .screen-nav-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-back {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-back:hover { background: var(--smoke); }
+
+  .btn-next {
+    padding: 8px 20px;
+    background: var(--green);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .btn-next:hover { background: #1f9158; }
+  .btn-next.restart { background: var(--ink); }
+  .btn-next.restart:hover { background: #1e2e22; }
+
+  .screen-body {
+    display: flex;
+    gap: 0;
+    min-height: 480px;
+  }
+
+  /* ── PHONE COLUMN ── */
+  .phone-col {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--smoke);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+  }
+
+  .phone {
+    width: 220px;
+    background: #181818;
+    border-radius: 36px;
+    padding: 10px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  }
+
+  .phone-inner {
+    background: #0a0a0a;
+    border-radius: 28px;
+    overflow: hidden;
+    min-height: 390px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .phone-statusbar {
+    background: #0a0a0a;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 16px 4px;
+  }
+
+  .phone-statusbar span {
+    color: #555;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+  }
+
+  .phone-appbar {
+    background: #111;
+    padding: 8px 14px 7px;
+    border-bottom: 1px solid #1e1e1e;
+  }
+
+  .phone-appbar-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #444;
+  }
+
+  .phone-screen {
+    flex: 1;
+    padding: 16px 14px;
+    background: #0a0a0a;
+  }
+
+  .ussd-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #00ff66;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .ussd-body-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #00cc55;
+    line-height: 1.9;
+    white-space: pre-wrap;
+  }
+
+  .ussd-muted {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #3a3a3a;
+    line-height: 1.8;
+  }
+
+  .ussd-success {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #00ffaa;
+    line-height: 1.9;
+  }
+
+  .phone-inputbar {
+    background: #111;
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #1e1e1e;
+  }
+
+  .phone-input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: #00cc55;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 6px 8px;
+    outline: none;
+  }
+
+  .phone-send {
+    background: #1a5c35;
+    color: #00ff66;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+  }
+  .phone-send:hover { background: #22703f; }
+
+  /* ── INFO COLUMN ── */
+  .info-col {
+    flex: 1;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: auto;
+  }
+
+  .screen-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 480px;
+  }
+
+  /* ── STATS ── */
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    background: var(--smoke);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 100px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .stat-val.green { color: var(--green); }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight {
+    background: var(--green-pale);
+    border: 1px solid #b5dfc0;
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+
+  .highlight-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #175c35;
+    margin-bottom: 4px;
+  }
+
+  .highlight-text {
+    font-size: 13px;
+    color: #2a6642;
+    line-height: 1.6;
+  }
+
+  /* ── DASHBOARD SCREEN ── */
+  .dash-screen .screen-body {
+    flex-direction: column;
+    padding: 28px 32px;
+    gap: 20px;
+  }
+
+  .marketplace-table {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .marketplace-header {
+    background: var(--ink);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .marketplace-header span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #00cc55;
+  }
+
+  .marketplace-header .mh-sub {
+    color: #444;
+    font-size: 10px;
+  }
+
+  .bundle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .bundle-row:last-child { border-bottom: none; }
+
+  .bundle-info {}
+  .bundle-id {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+
+  .bundle-meta {
+    font-size: 11px;
+    color: #999;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .bundle-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .badge-green { background: var(--green-pale); color: #175c35; }
+  .badge-amber { background: #faeeda; color: #633806; }
+
+  .bundle-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .btn-buy {
+    padding: 7px 18px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-buy:hover { background: #1f9158; }
+
+  .btn-buy-disabled {
+    padding: 7px 18px;
+    background: #e8e8e8;
+    color: #aaa;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: default;
+  }
+
+  /* ── FOOTER ── */
+  .footer-bar {
+    border-top: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafaf8;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .footer-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .prog-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+
+  .prog-dot.active { background: var(--green); }
+  .prog-dot.done { background: #7ec89a; }
+
+  .footer-hint {
+    font-size: 12px;
+    color: #bbb;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 680px) {
+    .screen-body { flex-direction: column; }
+    .phone-col { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+    .fnav-sub { display: none; }
+    .topbar-badge { display: none; }
+    .main { padding: 16px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">SokoCarbon <span class="topbar-badge">Interactive Prototype · Falling Walls 2026</span></div>
+  <div class="topbar-tag">Engineering &amp; Technology</div>
+</div>
+
+<div class="main">
+
+  <!-- Flow nav -->
+  <div class="flow-nav" id="flow-nav">
+    <div class="fnav-item active" onclick="goTo(0)">
+      <div class="fnav-num">1</div>
+      <div class="fnav-label">Enrol</div>
+      <div class="fnav-sub">Trader</div>
+    </div>
+    <div class="fnav-item" onclick="goTo(1)">
+      <div class="fnav-num">2</div>
+      <div class="fnav-label">Log sales</div>
+      <div class="fnav-sub">Trader</div>
+    </div>
+    <div class="fnav-item" onclick="goTo(2)">
+      <div class="fnav-num">3</div>
+      <div class="fnav-label">Credits</div>
+      <div class="fnav-sub">Trader</div>
+    </div>
+    <div class="fnav-item" onclick="goTo(3)">
+      <div class="fnav-num">4</div>
+      <div class="fnav-label">Bundle</div>
+      <div class="fnav-sub">Platform</div>
+    </div>
+    <div class="fnav-item" onclick="goTo(4)">
+      <div class="fnav-num">5</div>
+      <div class="fnav-label">Marketplace</div>
+      <div class="fnav-sub">Buyer</div>
+    </div>
+    <div class="fnav-item" onclick="goTo(5)">
+      <div class="fnav-num">6</div>
+      <div class="fnav-label">Payout</div>
+      <div class="fnav-sub">Trader</div>
+    </div>
+  </div>
+
+  <!-- Content card -->
+  <div class="content-card">
+
+    <!-- ── SCREEN 0: ENROL ── -->
+    <div class="screen active" id="s0">
+      <div class="screen-header">
+        <div class="screen-meta">
+          <div class="screen-tag">Screen 1 of 6 · Trader flow</div>
+          <div class="screen-title">Trader enrols via USSD</div>
+        </div>
+        <div class="screen-nav-btns">
+          <button class="btn-next" onclick="goTo(1)">Next: Log sales →</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="phone-col">
+          <div class="phone">
+            <div class="phone-inner">
+              <div class="phone-statusbar"><span>09:41</span><span>Airtel  ▌▌▌</span></div>
+              <div class="phone-appbar"><div class="phone-appbar-title">USSD  ·  *384#</div></div>
+              <div class="phone-screen">
+                <div class="ussd-title">Welcome to SokoCarbon</div>
+                <div class="ussd-body-text">Carbon credits for clean
+cooking traders
+
+1. Register as trader
+2. Log sales
+3. Check my credits
+4. Withdraw earnings</div>
+                <br>
+                <div class="ussd-muted">Enter option:</div>
+              </div>
+              <div class="phone-inputbar">
+                <input class="phone-input" value="1" readonly>
+                <button class="phone-send">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="screen-desc">Any trader dials <strong>*384#</strong> on any Airtel or TNM phone — no smartphone, no data connection, no bank account required. The menu loads in under 2 seconds on 2G.</div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-label">Access method</div>
+              <div class="stat-val" style="font-size:15px;">USSD *384#</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Data needed</div>
+              <div class="stat-val green">Zero</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Load time</div>
+              <div class="stat-val green">&lt;2s</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Networks</div>
+              <div class="stat-val" style="font-size:14px;">Airtel / TNM</div>
+            </div>
+          </div>
+          <div class="highlight">
+            <div class="highlight-title">Why USSD?</div>
+            <div class="highlight-text">70–80% of informal cooking fuel traders in the region have feature phones only. USSD works on every phone, on every network, with no app installation and no data. It is the only access method that truly reaches the excluded.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-progress">
+          <div class="prog-dot active"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div>
+        </div>
+        <div class="footer-hint">Click "Next" or tap any step above to navigate</div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 1: LOG SALES ── -->
+    <div class="screen" id="s1">
+      <div class="screen-header">
+        <div class="screen-meta">
+          <div class="screen-tag">Screen 2 of 6 · Trader flow</div>
+          <div class="screen-title">Trader logs weekly fuel sales</div>
+        </div>
+        <div class="screen-nav-btns">
+          <button class="btn-back" onclick="goTo(0)">← Back</button>
+          <button class="btn-next" onclick="goTo(2)">Next: View credits →</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="phone-col">
+          <div class="phone">
+            <div class="phone-inner">
+              <div class="phone-statusbar"><span>09:43</span><span>Airtel  ▌▌▌</span></div>
+              <div class="phone-appbar"><div class="phone-appbar-title">USSD  ·  Log weekly sales</div></div>
+              <div class="phone-screen">
+                <div class="ussd-title">Week ending 30 Apr 2026</div>
+                <div class="ussd-body-text">What clean fuel did
+you sell this week?
+
+1. LPG / Gas cylinders
+2. Ethanol / bioethanol
+3. Improved cookstoves
+4. Wood pellets</div>
+                <br>
+                <div class="ussd-muted">You selected: 1 (LPG)
+Qty sold this week (kg):</div>
+              </div>
+              <div class="phone-inputbar">
+                <input class="phone-input" value="25" readonly>
+                <button class="phone-send">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="screen-desc">Every week, the trader enters two things: <strong>fuel type</strong> and <strong>quantity sold</strong>. Two button presses. Under 30 seconds. The emissions engine runs automatically in the background — the trader never sees the maths.</div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-label">Fuel logged</div>
+              <div class="stat-val" style="font-size:15px;">LPG · 25kg</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">CO₂ avoided</div>
+              <div class="stat-val green">0.057t</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Methodology</div>
+              <div class="stat-val" style="font-size:12px;">TPDDTEC v3</div>
+            </div>
+          </div>
+          <div class="highlight">
+            <div class="highlight-title">Gold Standard TPDDTEC methodology</div>
+            <div class="highlight-text">Each avoided tonne is calculated using the Tool to Determine Avoided Emissions for Clean Cooking Technologies — the internationally recognised Gold Standard method for exactly this use case. Every calculation is auditable and stored on the platform ledger.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-progress">
+          <div class="prog-dot done"></div><div class="prog-dot active"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div>
+        </div>
+        <div class="footer-hint">2 / 6 screens</div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 2: CREDITS ── -->
+    <div class="screen" id="s2">
+      <div class="screen-header">
+        <div class="screen-meta">
+          <div class="screen-tag">Screen 3 of 6 · Trader flow</div>
+          <div class="screen-title">Trader checks her credit balance</div>
+        </div>
+        <div class="screen-nav-btns">
+          <button class="btn-back" onclick="goTo(1)">← Back</button>
+          <button class="btn-next" onclick="goTo(3)">Next: Bundle ready →</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="phone-col">
+          <div class="phone">
+            <div class="phone-inner">
+              <div class="phone-statusbar"><span>09:44</span><span>Airtel  ▌▌▌</span></div>
+              <div class="phone-appbar"><div class="phone-appbar-title">USSD  ·  My credits</div></div>
+              <div class="phone-screen">
+                <div class="ussd-title">Grace Banda</div>
+                <div class="ussd-body-text">Lilongwe Market · Stall 14
+
+This week:  +0.057t CO2
+Your total:  0.234t CO2
+
+Bundle progress:
+[======....] 67/100t</div>
+                <br>
+                <div class="ussd-success">Est. earnings: MWK 2,400</div>
+                <br>
+                <div class="ussd-muted">~47 days to next payout</div>
+              </div>
+              <div class="phone-inputbar">
+                <input class="phone-input" value="0 - Back" readonly>
+                <button class="phone-send">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="screen-desc">The trader can check her accumulated credit balance, see the real-time bundle progress across all traders in her pool, and see her estimated payout — from any phone, any time.</div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-label">Her credits</div>
+              <div class="stat-val green">0.234t</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Pool progress</div>
+              <div class="stat-val">67 / 100t</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Est. payout</div>
+              <div class="stat-val green">MWK 2,400</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Days to bundle</div>
+              <div class="stat-val">~47</div>
+            </div>
+          </div>
+          <div class="highlight">
+            <div class="highlight-title">Transparency for every trader</div>
+            <div class="highlight-text">Every trader can see exactly how many tonnes she has contributed, the pool's progress, and her proportional share of the next bundle sale. No opaque intermediary. No delayed reporting. Real numbers, in real time.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-progress">
+          <div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot active"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div>
+        </div>
+        <div class="footer-hint">3 / 6 screens</div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 3: BUNDLE READY ── -->
+    <div class="screen" id="s3">
+      <div class="screen-header">
+        <div class="screen-meta">
+          <div class="screen-tag">Screen 4 of 6 · Platform</div>
+          <div class="screen-title">100-tonne bundle threshold reached</div>
+        </div>
+        <div class="screen-nav-btns">
+          <button class="btn-back" onclick="goTo(2)">← Back</button>
+          <button class="btn-next" onclick="goTo(4)">Next: Buyer marketplace →</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="phone-col">
+          <div class="phone">
+            <div class="phone-inner">
+              <div class="phone-statusbar"><span>10:02</span><span>Airtel  ▌▌▌</span></div>
+              <div class="phone-appbar"><div class="phone-appbar-title">SokoCarbon  ·  SMS Alert</div></div>
+              <div class="phone-screen">
+                <div class="ussd-title">Bundle complete!</div>
+                <div class="ussd-success">100 tonnes verified ✓</div>
+                <br>
+                <div class="ussd-body-text">Your credits: 0.234t
+Bundle ID: SKC-20260412
+Traders in pool: 4,280
+
+Est. sale price:
+$750 – $5,000 USD
+
+Your share: ~0.23%</div>
+                <br>
+                <div class="ussd-success">You will be notified
+when funds arrive.</div>
+              </div>
+              <div class="phone-inputbar">
+                <input class="phone-input" value="0 - Back" readonly>
+                <button class="phone-send">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="screen-desc">When pooled credits across all traders hit 100 tonnes, the platform automatically runs final verification and lists the bundle on the buyer marketplace. Traders receive an SMS notification instantly.</div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-label">Bundle size</div>
+              <div class="stat-val">100t</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Traders in pool</div>
+              <div class="stat-val">4,280</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Est. value</div>
+              <div class="stat-val green">$1,500</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Verification</div>
+              <div class="stat-val" style="font-size:13px;">Automated</div>
+            </div>
+          </div>
+          <div class="highlight">
+            <div class="highlight-title">The aggregation breakthrough</div>
+            <div class="highlight-text">A single trader generates ~0.02t per week — she would need 5,000 weeks to qualify alone. SokoCarbon pools credits across thousands of traders until the 100-tonne threshold is met, unlocking market access that was structurally impossible before.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-progress">
+          <div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot active"></div><div class="prog-dot"></div><div class="prog-dot"></div>
+        </div>
+        <div class="footer-hint">4 / 6 screens</div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 4: BUYER DASHBOARD ── -->
+    <div class="screen dash-screen" id="s4">
+      <div class="screen-header">
+        <div class="screen-meta">
+          <div class="screen-tag">Screen 5 of 6 · Buyer flow</div>
+          <div class="screen-title">Corporate buyer marketplace</div>
+        </div>
+        <div class="screen-nav-btns">
+          <button class="btn-back" onclick="goTo(3)">← Back</button>
+          <button class="btn-next" onclick="goTo(5)">Next: Trader payout →</button>
+        </div>
+      </div>
+      <div class="dash-screen" style="padding:0;">
+        <div style="padding:24px 32px 0;display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="stat-card">
+            <div class="stat-label">Available bundles</div>
+            <div class="stat-val">3</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total listed</div>
+            <div class="stat-val">312t</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Price range</div>
+            <div class="stat-val" style="font-size:16px;">$8–22/t</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Methodology</div>
+            <div class="stat-val" style="font-size:13px;color:var(--green);">Gold Standard</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Buyer</div>
+            <div class="stat-val" style="font-size:13px;">Unilever ESG</div>
+          </div>
+        </div>
+        <div style="padding:20px 32px 28px;">
+          <div class="marketplace-table">
+            <div class="marketplace-header">
+              <span>SokoCarbon — Available bundles</span>
+              <span class="mh-sub">Verified · Gold Standard TPDDTEC v3</span>
+            </div>
+            <div class="bundle-row">
+              <div class="bundle-info">
+                <div class="bundle-id">SKC-20260412 · 100t · Malawi</div>
+                <div class="bundle-meta">4,280 traders · LPG displacement · Verified 12 Apr 2026 · Lilongwe region</div>
+              </div>
+              <div class="bundle-actions">
+                <span class="badge badge-green">Verified</span>
+                <span class="bundle-price">$1,500</span>
+                <button class="btn-buy" onclick="this.textContent='Purchased ✓';this.style.background='#0f6e56';">Buy now</button>
+              </div>
+            </div>
+            <div class="bundle-row">
+              <div class="bundle-info">
+                <div class="bundle-id">SKC-20260318 · 112t · Kenya</div>
+                <div class="bundle-meta">5,100 traders · Ethanol displacement · Verified 18 Mar 2026 · Nairobi region</div>
+              </div>
+              <div class="bundle-actions">
+                <span class="badge badge-green">Verified</span>
+                <span class="bundle-price">$2,240</span>
+                <button class="btn-buy" onclick="this.textContent='Purchased ✓';this.style.background='#0f6e56';">Buy now</button>
+              </div>
+            </div>
+            <div class="bundle-row">
+              <div class="bundle-info">
+                <div class="bundle-id">SKC-20260501 · 100t · Zambia</div>
+                <div class="bundle-meta">3,890 traders · Improved cookstoves · Audit in progress · Lusaka region</div>
+              </div>
+              <div class="bundle-actions">
+                <span class="badge badge-amber">Pending audit</span>
+                <span class="bundle-price" style="color:#999;">$1,200</span>
+                <button class="btn-buy-disabled">Coming soon</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-progress">
+          <div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot active"></div><div class="prog-dot"></div>
+        </div>
+        <div class="footer-hint">5 / 6 screens</div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 5: PAYOUT ── -->
+    <div class="screen" id="s5">
+      <div class="screen-header">
+        <div class="screen-meta">
+          <div class="screen-tag">Screen 6 of 6 · Complete</div>
+          <div class="screen-title">Trader receives her payout via Airtel Money</div>
+        </div>
+        <div class="screen-nav-btns">
+          <button class="btn-back" onclick="goTo(4)">← Back</button>
+          <button class="btn-next restart" onclick="goTo(0)">↺ Start over</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="phone-col">
+          <div class="phone">
+            <div class="phone-inner">
+              <div class="phone-statusbar"><span>14:37</span><span>Airtel  ▌▌▌</span></div>
+              <div class="phone-appbar"><div class="phone-appbar-title">Airtel Money  ·  Payment</div></div>
+              <div class="phone-screen">
+                <div class="ussd-title">Payment received!</div>
+                <div class="ussd-success">MWK 2,847 credited ✓</div>
+                <br>
+                <div class="ussd-body-text">From: SokoCarbon
+Ref: SKC-20260412
+Bundle: 100t Malawi
+
+Credits: 0.234t CO2
+Your share: 0.234%
+Platform fee: 12%</div>
+                <br>
+                <div class="ussd-success">New balance:
+MWK 8,340</div>
+              </div>
+              <div class="phone-inputbar">
+                <input class="phone-input" value="1 - Withdraw" readonly>
+                <button class="phone-send">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="screen-desc">Revenue is disbursed automatically to each trader via Airtel Money, proportional to their carbon contribution. Instant. No bank account. No paperwork. No middleman taking a cut beyond the transparent 12% platform fee.</div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-label">Grace received</div>
+              <div class="stat-val green">MWK 2,847</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Via</div>
+              <div class="stat-val" style="font-size:14px;">Airtel Money</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Time to pay</div>
+              <div class="stat-val green">&lt;60s</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Platform fee</div>
+              <div class="stat-val">12%</div>
+            </div>
+          </div>
+          <div style="background:#eaf3de;border:1px solid #b5dfc0;border-radius:10px;padding:16px 18px;">
+            <div style="font-size:13px;font-weight:500;color:#175c35;margin-bottom:6px;">Full flow complete</div>
+            <div style="font-size:13px;color:#2a6642;line-height:1.6;">Grace dialled <strong>*384#</strong> → logged her weekly LPG sales → her credits pooled with 4,279 other traders → the bundle hit 100 tonnes → a corporate buyer purchased it → Grace received <strong>MWK 2,847</strong> in under 60 seconds.</div>
+            <div style="margin-top:10px;font-size:12px;color:#3b8040;">No smartphone. No bank account. No intermediary. Just a trader and a phone — earning from climate finance for the first time.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-progress">
+          <div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot done"></div><div class="prog-dot active"></div>
+        </div>
+        <div style="font-size:12px;color:var(--green);font-family:'Space Mono',monospace;font-weight:500;">Flow complete ✓</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom credit -->
+  <div style="text-align:center;margin-top:24px;font-family:'Space Mono',monospace;font-size:11px;color:#bbb;">
+    SokoCarbon · Breaking the Wall of Carbon Finance Exclusion · Falling Walls Global Call 2026
+  </div>
+
+</div>
+
+<script>
+  var current = 0;
+
+  function goTo(n) {
+    document.querySelectorAll('.screen').forEach(function(s, i) {
+      s.classList.toggle('active', i === n);
+    });
+    var navItems = document.querySelectorAll('.fnav-item');
+    navItems.forEach(function(item, i) {
+      item.classList.remove('active', 'done');
+      if (i === n) item.classList.add('active');
+      else if (i < n) item.classList.add('done');
+      var numEl = item.querySelector('.fnav-num');
+      if (i < n) numEl.textContent = '✓';
+      else numEl.textContent = i + 1;
+    });
+    current = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+  </html>
